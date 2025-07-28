@@ -13,7 +13,6 @@ void usart_port_init(void);
 void gpio_init(void);
 void send_char(char data);
 void send_string(char *str);
-uint16_t calculate_brr_accurate(uint32_t apb_clock, uint32_t baud_rate);
 
 int main(void)
 {
@@ -134,20 +133,7 @@ void usart_port_init(void){
     GPIOA_AFRH_ADDR |= ((0x07 << 4) | (0x07 << 8));    // AF7 설정
 }
 
-uint16_t calculate_brr_accurate(uint32_t apb_clock, uint32_t baud_rate) {
-    // Step 1: USART_DIV 계산 (고정소수점 연산 사용)
-    uint32_t usart_div_x1000 = (apb_clock * 1000) / (OVERSAMPLING * baud_rate);
-    
-    // Step 2: 정수부 추출
-    uint16_t mantissa = usart_div_x1000 / 1000;
-    
-    // Step 3: 소수부 계산 (1/16 단위)
-    uint32_t remainder = usart_div_x1000 % 1000;
-    uint16_t fraction = (remainder * 16 + 500) / 1000;  // 반올림 포함
-    
-    // Step 4: BRR 조합
-    return (mantissa << 4) | (fraction & 0xF);
-}
+
 
 void usart_init(void){
     USART1_CR1_ADDR &= ~(1 << 13);
