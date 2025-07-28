@@ -17,34 +17,48 @@
 // RCC clock interrupt register (RCC_CIR)
 #define RCC_CIR_ADDR     (*(volatile uint32_t*)(RCC_BASE + 0x0C))
 
-#define RCC_AHB1ENR_ADDR  (*(volatile uint32_t*)(RCC_BASE + 0x30)) 
-
+#define RCC_AHB1ENR_ADDR  (*(volatile uint32_t*)(RCC_BASE + 0x30))
+// Communication RCC
 #define RCC_APB1ENR_ADDR    (*(volatile uint32_t*)(RCC_BASE + 0x40))
+#define RCC_APB2ENR_ADDR    (*(volatile uint32_t*)(RCC_BASE + 0x44))
+
 #define FLASH_ACR_ADDR      (*(volatile uint32_t*)(FLASH_ADD_BASE + 0x00))
 
+// PORT A
+#define GPIOA_BASE_ADDR      0x40020000UL
+#define GPIOA_MODER_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x00))
+#define GPIOA_OTYPER_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x04))
+#define GPIOA_OSPEEDR_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x08))
+#define GPIOA_PUPDR_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x0C))
+
+#define GPIOA_AFRL_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x20))
+#define GPIOA_AFRH_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x24))
+
+// PORT I
 #define GPIOI_BASE_ADDR      0x40022000UL
 #define GPIOI_MODER_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x00))
 #define GPIOI_OTYPER_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x04))
 #define GPIOI_OSPEEDR_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x08))
 #define GPIOI_PUPDR_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x0C))
-
+// PORT F
 #define GPIOF_BASE_ADDR      0x40021400UL
 #define GPIOF_MODER_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x00))
 #define GPIOF_OTYPER_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x04))
 #define GPIOF_OSPEEDR_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x08))
 #define GPIOF_PUPDR_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x0C))
 
-
-
-
-
-
+// PORT I , F set , reset
 #define GPIOI_BSRR_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x18))
 #define GPIOF_BSRR_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x18))
 
-
-
-
+// USART register
+#define USART1_BASE_ADDR    0x40011000UL
+#define USART1_SR_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x00))
+#define USART1_DR_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x04))
+#define USART1_CR1_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x0C))
+#define USART1_CR2_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x10))
+#define USART1_CR3_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x14))
+#define USART1_BRR_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x08))
 
 
 

@@ -2,9 +2,9 @@ CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
 MACH=cortex-m4
 CFLAGS= -c -mcpu=$(MACH) -mthumb -mfloat-abi=soft -std=gnu11 -Wall -O0
-LDFLAGS= -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=nosys.specs -T stm32_ls.ld -Wl,-Map=final.map
+LDFLAGS= -mcpu=$(MACH) -mthumb -mfloat-abi=soft --specs=nosys.specs -T stm32_ls.ld -Wl,-Map=test.map
 
-all:main.o stm32_startup.o final.elf final.hex
+all:main.o stm32_startup.o test.elf test.hex
 
 main.o:main.c
 	$(CC) $(CFLAGS) -o $@ $^
@@ -12,10 +12,10 @@ main.o:main.c
 stm32_startup.o:stm32_startup.c
 	$(CC) $(CFLAGS) -o $@ $^
 
-final.hex: final.elf
+test.hex: test.elf
 	$(OBJCOPY) -O ihex $< $@
 
-final.elf: main.o stm32_startup.o
+test.elf: main.o stm32_startup.o
 	$(CC) $(LDFLAGS) -o $@ $^
 
 clean:
