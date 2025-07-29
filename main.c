@@ -13,6 +13,15 @@ void usart_port_init(void);
 void gpio_init(void);
 void send_char(char data);
 void send_string(char *str);
+void spi_port_init(void);
+void spi_flash_init(void);
+void sf_ReadInfo(void);
+uint32_t sf_ReadID(void);
+static uint8_t sf_SendByte(uint8_t _ucValue);
+
+// SPI1
+#define SF_CS_LOW()     (GPIOF_ODR_ADDR &= ~(1 << 8))
+#define SF_CS_HIGH()     (GPIOF_ODR_ADDR |= (1 << 8))
 
 int main(void)
 {
@@ -177,6 +186,111 @@ void send_string(char *str){
         send_char(*str);
         str++;
     }
+}
+
+void spi_port_init(void)
+{
+    // GPIO B , GPIO F RCC enable
+    RCC_AHB1ENR_ADDR |= ((1 << 1) | (1 << 5));
+    // SPI1 clock enable
+    RCC_APB2ENR_ADDR |= (1 << 12);
+    // AF 설정 (SPI 1)
+    // GPIOB 3,4,5
+    // GPIOB MODE , AF Mode
+    GPIOB_MODER_ADDR &= ~((0x3 << 6) | (0x3 << 8) | (0x3 << 10));
+    GPIOB_MODER_ADDR  |= ((0x2 << 6) | (0x2 << 8) | (0x2 << 10));
+    // GPIOB SPEED
+    GPIOB_OSPEEDR_ADDR &= ~((0x3 << 6) | (0x3 << 8) | (0x3 << 10));
+    GPIOB_OSPEEDR_ADDR |= ((0x2 << 6) |  (0x2 << 8) | (0x2 << 10)); 
+    // GPIOB PULL DOWN   
+    GPIOB_PUPDR_ADDR &= ~((0x3 << 6) | (0x3 << 8) | (0x3 << 10));
+    GPIOB_PUPDR_ADDR |= ((0x2 << 6) |  (0x2 << 8) | (0x2 << 10));
+    // GPIOB AF setting. SPI1
+    GPIOB_AFRL_ADDR &= ~((0xF << 12) | ( 0xF << 16) | ( 0xF << 20));
+    GPIOB_AFRL_ADDR |= ((0x5 << 12) | ( 0x5 << 16) | ( 0x5 << 20));
+
+    SF_CS_HIGH();
+    // GPIOF output mode
+    GPIOF_MODER_ADDR &= ~(0x3 << 16);
+    GPIOF_MODER_ADDR |= (0x1 << 16);
+    // GPIOF SPEED
+    GPIOF_OSPEEDR_ADDR &= ~(0x3 << 16); 
+    GPIOF_OSPEEDR_ADDR |= (0x2 << 16);
+    // GPIOF NO FULL
+    GPIOF_PUPDR_ADDR &= ~(0x3 << 16);
+    //GPIOF_PUPDR_ADDR |= (0x0 << 16);
+}
+
+void spi_flash_init(void)
+{
+    SPI1_CR1_ADDR |= ((0x1 << 0)  |              // The second clock transition is the first data capture edge
+                      (0x1 << 1)  |              // CK to 1 when idle 
+                      (0x1 << 2)  |              // Master configuration
+                      (0x1 << 6)  |              // SPI enable , Peripheral enabled
+                      (0x0 << 7)  |              // MSB transmitted first
+                      (0x1 << 8)  |              // SSI
+                      (0x1 << 9)  |              // Software slave management enabled
+                      (0x0 << 10) |              // Full duplex
+                      (0x0 << 11) |              // 8-bit data frame format is selected for transmission/reception
+                      (0x0 << 13) |              // CRC calculation disabled
+                      (0x0 << 15));              // BIDIMODE = 0 (2-line unidirectional)  
+
+    SPI1_CR1_ADDR &= ~(0x7 << 3);
+    SPI1_CR1_ADDR |=  (1 << 3);                   // fpclk / 4
+    
+    //SS output enable
+    SPI1_CR2_ADDR |= (0x1 << 2);                  // SS output is enabled in master mode and when the cell is enabled. The cell cannot work in a multimaster environment.??
+    //Frame format
+    SPI1_CR2_ADDR &= ~(0x1 << 4);                 // FRF = 0, Standard SPI mode
+}
+
+uint32_t sf_ReadID(void)
+{
+    uint32_t uiID;
+	uint8_t id1, id2, id3;
+
+    SF_CS_LOW();
+}
+
+static uint8_t sf_SendByte(uint8_t _ucValue)
+{
+    uint8_t rxData = 0;
+
+
+}
+
+#if 0
+void SPI_TransmitReceive(uint8_t *pTxData, uint16_t Size)
+{
+    uint16_t RxXferCount = Size;
+    uint16_t RxXferSize = Size;
+    uint8_t * pTxBuffPtr = (uint8_t *)pTxData;
+    uint16_t TxXferCount = Size;
+    uint16_t TxXferSize = Size;
+
+    uint32_t txallowed = 1U;
+    
+    //uint16_t initial_TxXferCount;
+    SPI1_DR_ADDR = pTxBuffPtr;
+    pTxBuffPtr += sizeof(uint8_t);
+    TxXferCount--;
+
+    while((TxXferCount > 0U) || (RxXferCount > 0U))
+    {
+        if((SPI1_SR_ADDR & (0x1 << 1)) && (TxXferCount > 0U) && (txallowed == 1U)){
+            SPI1_DR_ADDR = pTxBuffPtr;
+            pTxBuffPtr++;
+            TxXferCount--;
+
+            txallowed = 0U;
+        }
+    }
+    
+}
+#endif
+
+void sf_ReadInfo(void){
+
 }
 
 
