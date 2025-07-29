@@ -24,7 +24,7 @@
 
 #define FLASH_ACR_ADDR      (*(volatile uint32_t*)(FLASH_ADD_BASE + 0x00))
 
-// PORT A
+// GPIO A
 #define GPIOA_BASE_ADDR      0x40020000UL
 #define GPIOA_MODER_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x00))
 #define GPIOA_OTYPER_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x04))
@@ -34,20 +34,35 @@
 #define GPIOA_AFRL_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x20))
 #define GPIOA_AFRH_ADDR      (*(volatile uint32_t*)(GPIOA_BASE_ADDR + 0x24))
 
-// PORT I
+// GPIO B
+#define GPIOB_BASE_ADDR      0x40020400UL
+#define GPIOB_MODER_ADDR      (*(volatile uint32_t*)(GPIOB_BASE_ADDR + 0x00))
+#define GPIOB_OTYPER_ADDR      (*(volatile uint32_t*)(GPIOB_BASE_ADDR + 0x04))
+#define GPIOB_OSPEEDR_ADDR      (*(volatile uint32_t*)(GPIOB_BASE_ADDR + 0x08))
+#define GPIOB_PUPDR_ADDR      (*(volatile uint32_t*)(GPIOB_BASE_ADDR + 0x0C))
+
+#define GPIOB_AFRL_ADDR      (*(volatile uint32_t*)(GPIOB_BASE_ADDR + 0x20))
+#define GPIOB_AFRH_ADDR      (*(volatile uint32_t*)(GPIOB_BASE_ADDR + 0x24))
+
+// GPIO I
 #define GPIOI_BASE_ADDR      0x40022000UL
 #define GPIOI_MODER_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x00))
 #define GPIOI_OTYPER_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x04))
 #define GPIOI_OSPEEDR_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x08))
 #define GPIOI_PUPDR_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x0C))
-// PORT F
+
+// GPIO F
 #define GPIOF_BASE_ADDR      0x40021400UL
 #define GPIOF_MODER_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x00))
 #define GPIOF_OTYPER_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x04))
 #define GPIOF_OSPEEDR_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x08))
 #define GPIOF_PUPDR_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x0C))
 
-// PORT I , F set , reset
+#define GPIOF_AFRL_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x20))
+#define GPIOF_AFRH_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x24))
+
+// GPIO I , F set , reset
+#define GPIOF_ODR_ADDR       (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x14))
 #define GPIOI_BSRR_ADDR      (*(volatile uint32_t*)(GPIOI_BASE_ADDR + 0x18))
 #define GPIOF_BSRR_ADDR      (*(volatile uint32_t*)(GPIOF_BASE_ADDR + 0x18))
 
@@ -59,6 +74,14 @@
 #define USART1_CR2_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x10))
 #define USART1_CR3_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x14))
 #define USART1_BRR_ADDR      (*(volatile uint32_t*)(USART1_BASE_ADDR + 0x08))
+
+// SPI1 register
+#define SPI1_BASE_ADDR    0x40013000UL
+#define SPI1_CR1_ADDR     (*(volatile uint32_t*)(SPI1_BASE_ADDR + 0x00))
+#define SPI1_CR2_ADDR     (*(volatile uint32_t*)(SPI1_BASE_ADDR + 0x04))
+
+#define SPI1_SR_ADDR     (*(volatile uint32_t*)(SPI1_BASE_ADDR + 0x08))
+#define SPI1_DR_ADDR     (*(volatile uint32_t*)(SPI1_BASE_ADDR + 0x0C))
 
 
 
