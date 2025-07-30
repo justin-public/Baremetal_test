@@ -2,9 +2,24 @@
 //#include <stdio.h>
 #include <stdint.h>
 
+typedef enum {
+    TIMEOUT_OK = 0,
+    TIMEOUT_ERROR = 1
+} TimeoutStatus_t;
+
+#define MAX_DELAY 0xFFFFFFFFU
+
 #define USART_CLOCK     84000000    // 84MHz (APB2 클럭)
 #define BAUD_RATE       115200
 #define OVERSAMPLING    16
+
+#define UNUSED(X) (void)X
+
+#define CMD_RDID      0x9F
+#define DUMMY_BYTE    0xA5
+
+// system tick counter
+volatile uint32_t system_tick = 0;
 
 //void enable_processor_faults(void);
 void Systemclock_Configuration(void);
@@ -12,30 +27,78 @@ void usart_init(void);
 void usart_port_init(void);
 void gpio_init(void);
 void send_char(char data);
+void send_digit(uint8_t digit);
+void send_number(uint32_t number);
+void send_hex(uint32_t number);
+
+//void send_format(char *format, uint32_t value);
+//void send_format2(char *format, uint32_t value1, uint32_t value2);
+
 void send_string(char *str);
 void spi_port_init(void);
 void spi_flash_init(void);
 void sf_ReadInfo(void);
 uint32_t sf_ReadID(void);
 static uint8_t sf_SendByte(uint8_t _ucValue);
+void SPI_TransmitReceive(uint8_t *pTxData, uint8_t *pRxData, uint16_t Size);
+void SysTick_Init(uint32_t system_clock_hz);
+uint32_t GetTick(void);
 
 // SPI1
 #define SF_CS_LOW()     (GPIOF_ODR_ADDR &= ~(1 << 8))
 #define SF_CS_HIGH()     (GPIOF_ODR_ADDR |= (1 << 8))
 
+__attribute__((always_inline)) static inline void __enable_irq(void){
+    __asm volatile ("cpsie i" : : : "memory");
+}
+
+TimeoutStatus_t CheckTimeout(uint32_t tickstart, uint32_t timeout){
+    if (((GetTick() - tickstart) >= timeout) && (timeout != MAX_DELAY)) {
+        return TIMEOUT_ERROR;
+    }
+    
+    if (timeout == 0U) {
+        return TIMEOUT_ERROR;
+    }
+    return TIMEOUT_OK;
+}
+
 int main(void)
 {
+    uint32_t counter = 0;
     // 시스템 클록 설정
     Systemclock_Configuration();
+    
+    SysTick_Init(168000000); // 168MHz 시스템 클록
+    
+    __enable_irq();
+    
     // GPIO 설정
     gpio_init();
     usart_port_init();
     usart_init();    
+    
+    spi_port_init();
+    spi_flash_init();        
+    
     //enable_processor_faults();
     while (1)
     {
-        send_string("Baremetal USART1 update\r\n");
-        for(int i = 0; i < 1000000; i++);
+        #if 0
+        //send_string("Baremetal USART1 update\r\n");
+        uint32_t tickstart = GetTick();
+        
+        send_string("Tick: ");
+        send_number(tickstart);
+        send_string(", Counter: ");
+        send_number(counter);
+        send_string("\r\n");
+        
+        counter++;
+        
+        uint32_t start = GetTick();
+        while ((GetTick() - start) < 1000) {}
+        #endif
     }
 }
 
@@ -181,6 +244,74 @@ void send_char(char data){
     USART1_DR_ADDR = data;
 }
 
+void send_digit(uint8_t digit) {
+    send_char('0' + digit);
+}
+
+void send_number(uint32_t number) {
+    char buffer[12];  // 32비트 최대값: 4294967295 (10자리) + null
+    int i = 0;
+    
+    // 0인 경우 특별 처리
+    if (number == 0) {
+        send_char('0');
+        return;
+    }
+    
+    // 숫자를 역순으로 buffer에 저장
+    while (number > 0) {
+        buffer[i++] = '0' + (number % 10);
+        number /= 10;
+    }
+    
+    // 역순으로 저장된 것을 정순으로 출력
+    for (int j = i - 1; j >= 0; j--) {
+        send_char(buffer[j]);
+    }
+}
+
+// 16진수로 출력 (디버깅용)
+void send_hex(uint32_t number) {
+    char hex_chars[] = "0123456789ABCDEF";
+    send_string("0x");
+    
+    for (int i = 28; i >= 0; i -= 4) {
+        send_char(hex_chars[(number >> i) & 0xF]);
+    }
+}
+
+#if 0
+void send_format(char *format, uint32_t value) {
+    while (*format) {
+        if (*format == '%' && *(format + 1) == 'd') {
+            send_number(value);
+            format += 2;  // %d 건너뛰기
+        } else if (*format == '%' && *(format + 1) == 'x') {
+            send_hex(value);
+            format += 2;  // %x 건너뛰기
+        } else {
+            send_char(*format);
+            format++;
+        }
+    }
+}
+
+void send_format2(char *format, uint32_t value1, uint32_t value2) {
+    int param_count = 0;
+    while (*format) {
+        if (*format == '%' && *(format + 1) == 'd') {
+            if (param_count == 0) send_number(value1);
+            else if (param_count == 1) send_number(value2);
+            param_count++;
+            format += 2;
+        } else {
+            send_char(*format);
+            format++;
+        }
+    }
+}
+#endif
+
 void send_string(char *str){
     while(*str){
         send_char(*str);
@@ -242,57 +373,97 @@ void spi_flash_init(void)
     SPI1_CR2_ADDR |= (0x1 << 2);                  // SS output is enabled in master mode and when the cell is enabled. The cell cannot work in a multimaster environment.??
     //Frame format
     SPI1_CR2_ADDR &= ~(0x1 << 4);                 // FRF = 0, Standard SPI mode
+
+    sf_ReadInfo();
 }
 
 uint32_t sf_ReadID(void)
 {
     uint32_t uiID;
 	uint8_t id1, id2, id3;
-
+    
     SF_CS_LOW();
+    sf_SendByte(CMD_RDID);
+    id1 = sf_SendByte(DUMMY_BYTE);
+    id2 = sf_SendByte(DUMMY_BYTE);
+    id3 = sf_SendByte(DUMMY_BYTE);
+    SF_CS_HIGH();
+
+    uiID = ((uint32_t)id1 << 16) | ((uint32_t)id2 << 8) | id3;
+
+    return uiID; 
 }
 
 static uint8_t sf_SendByte(uint8_t _ucValue)
 {
     uint8_t rxData = 0;
-
-
+    SPI_TransmitReceive(&_ucValue, &rxData, 1);
+    return rxData;
 }
 
-#if 0
-void SPI_TransmitReceive(uint8_t *pTxData, uint16_t Size)
+#if 1
+void SPI_TransmitReceive(uint8_t *pTxData, uint8_t *pRxData, uint16_t Size)
 {
+    uint8_t * pRxBuffPtr = (uint8_t *)pRxData;
     uint16_t RxXferCount = Size;
-    uint16_t RxXferSize = Size;
+    //uint16_t RxXferSize = Size;
     uint8_t * pTxBuffPtr = (uint8_t *)pTxData;
     uint16_t TxXferCount = Size;
-    uint16_t TxXferSize = Size;
-
+    //uint16_t TxXferSize = Size;
     uint32_t txallowed = 1U;
     
-    //uint16_t initial_TxXferCount;
-    SPI1_DR_ADDR = pTxBuffPtr;
+    SPI1_DR_ADDR = *pTxBuffPtr;
     pTxBuffPtr += sizeof(uint8_t);
     TxXferCount--;
 
     while((TxXferCount > 0U) || (RxXferCount > 0U))
     {
         if((SPI1_SR_ADDR & (0x1 << 1)) && (TxXferCount > 0U) && (txallowed == 1U)){
-            SPI1_DR_ADDR = pTxBuffPtr;
+            SPI1_DR_ADDR = *pTxBuffPtr;
             pTxBuffPtr++;
             TxXferCount--;
-
             txallowed = 0U;
         }
+        if((SPI1_SR_ADDR & (0x1 << 0)) && (RxXferCount > 0U))
+        {
+            *pRxBuffPtr = SPI1_DR_ADDR;
+            pRxBuffPtr++;
+            RxXferCount--;
+            txallowed = 1U;
+        }
     }
-    
+    if(SPI1_CR1_ADDR & (0x0 << 10)){
+        uint32_t tmpreg_ovr = 0x00U;
+        do{
+            tmpreg_ovr = SPI1_DR_ADDR;
+            tmpreg_ovr = SPI1_SR_ADDR;
+            UNUSED(tmpreg_ovr);
+        }while(0U);
+    }    
 }
 #endif
 
 void sf_ReadInfo(void){
-
+    uint32_t ChipID = sf_ReadID();
+    send_hex(ChipID);
 }
 
+void SysTick_Init(uint32_t system_clock_hz){
+    SysTick_LOAD = (system_clock_hz / 1000) - 1;
+    SysTick_VAL = 0;   
+    SysTick_CTRL |= (0x1 << 0) |            // counter enable
+                    (0x1 << 1) |            // Counting down to zero to asserts the SysTick exception request.  
+                    (0x1 << 2) ;            // Processor clock (AHB)    
+}
+
+void SysTick_Handler(void)
+{
+    system_tick++;
+}
+
+uint32_t GetTick(void) {
+    return system_tick;
+}
 
 
 

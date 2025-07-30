@@ -1,6 +1,16 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+
+// Systick (Cortex-M4)
+#define SCS_BASE        0xE000E000UL                 // System Control Space Base Address
+#define SysTick_BASE    (SCS_BASE + 0x0010UL)        // SysTick Base Address
+#define SysTick_CTRL    (*(volatile uint32_t*)(SysTick_BASE + 0x00))  // SysTick control and status register  
+#define SysTick_LOAD    (*(volatile uint32_t*)(SysTick_BASE + 0x04))  // SysTick reload value register
+#define SysTick_VAL     (*(volatile uint32_t*)(SysTick_BASE + 0x08))  // SysTick current value register
+
+
+
 // RCC (Reset and Clock Control)
 /*Table 1. STM32F4xx register boundary addresses (continued)*/
 #define RCC_BASE         0x40023800UL
@@ -82,8 +92,5 @@
 
 #define SPI1_SR_ADDR     (*(volatile uint32_t*)(SPI1_BASE_ADDR + 0x08))
 #define SPI1_DR_ADDR     (*(volatile uint32_t*)(SPI1_BASE_ADDR + 0x0C))
-
-
-
 
 #endif
